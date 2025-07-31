@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GEHE MCP UI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>GEHE MCP Dashboard</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes">
+      {% for cat, msg in messages %}
+        <li class="{{ cat }}">{{ msg }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" enctype="multipart/form-data">
+    <label>Upload DICOM files:</label><br>
+    <input type="file" name="dicoms" multiple accept=".dcm"><br><br>
+
+    <label>Upload Text Data (first line = PatientID):</label><br>
+    <input type="file" name="textdata" accept=".txt,.csv,.json"><br><br>
+
+    <button type="submit">Process All</button>
+  </form>
+</body>
+</html>
