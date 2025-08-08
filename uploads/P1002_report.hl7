@@ -1,0 +1,8 @@
+MSH|^~\&|HIS|HOSPITAL|LAB|HOSPITAL|20250808123000||ORU^R01|MSG002|P|2.5
+PID|1||P1002^^^MR^MRN||DOE^JANE^M||19850322|F|||456 ELM ST^^CAMBRIDGE^MA^02138||617-555-5678
+OBR|1|ORDER002|RESULT002|36643-5^Chest CT^LN|||20250808||||||||||RAD^RADIOLOGY
+OBX|1|TX|18748-4^Diagnostic imaging study^LN||CLINICAL HISTORY: 39-year-old female with persistent cough and fever for 5 days.||||||F
+OBX|2|TX|18748-4^Diagnostic imaging study^LN||FINDINGS: CT chest with contrast shows patchy ground-glass opacities in bilateral lower lobes.||||||F  
+OBX|3|TX|18748-4^Diagnostic imaging study^LN||Mild bilateral hilar lymphadenopathy noted. No pleural effusion or pneumothorax.||||||F
+OBX|4|TX|18748-4^Diagnostic imaging study^LN||IMPRESSION: Bilateral lower lobe pneumonia. Recommend antibiotic therapy and follow-up imaging.||||||F
+NTE|1||Clinical correlation recommended. Consider infectious disease consultation if no improvement in 48-72 hours.

@@ -1,0 +1,15 @@
+{
+  "patientId": "P1002",
+  "patientName": "Jane M. Doe",
+  "age": 39,
+  "gender": "Female",
+  "clinicalText": "39-year-old female with persistent cough, fever, and shortness of breath for 5 days. Temperature 101.2°F.",
+  "diagnosis": "Bilateral pneumonia",
+  "findings": [
+    "CT chest shows patchy ground-glass opacities in bilateral lower lobes",
+    "Mild bilateral hilar lymphadenopathy present",
+    "No pleural effusion or pneumothorax"
+  ],
+  "conclusion": "Bilateral lower lobe pneumonia consistent with viral or atypical bacterial etiology.",
+  "recommendations": "Initiate antibiotic therapy. Follow-up chest imaging in 7-10 days. Consider infectious disease consultation if no improvement."
+}

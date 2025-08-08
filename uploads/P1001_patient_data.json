@@ -1,0 +1,15 @@
+{
+  "patientId": "P1001",
+  "patientName": "John A. Smith",
+  "age": 34,
+  "gender": "Male",
+  "clinicalText": "34-year-old male presenting with chest pain and dyspnea on exertion. Patient reports symptoms started 3 days ago.",
+  "diagnosis": "Rule out pulmonary embolism, coronary artery disease",
+  "findings": [
+    "Chest CT shows normal lung parenchyma bilaterally",
+    "No evidence of pulmonary embolism or pneumonia",
+    "Heart size within normal limits"
+  ],
+  "conclusion": "Normal chest CT. No acute cardiopulmonary abnormalities detected.",
+  "recommendations": "Clinical follow-up recommended if symptoms persist. Consider cardiac stress testing."
+}

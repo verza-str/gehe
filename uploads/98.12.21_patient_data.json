@@ -1,0 +1,16 @@
+{
+  "patientId": "98.12.21",
+  "patientName": "Test C. Patient",
+  "age": 44,
+  "gender": "Male",
+  "clinicalText": "44-year-old male with shortness of breath and chest tightness. Symptoms have been intermittent for 2 weeks.",
+  "diagnosis": "Evaluate for pulmonary or cardiac etiology of dyspnea",
+  "findings": [
+    "Non-contrast CT chest shows clear lung fields",
+    "Normal cardiac silhouette and mediastinal structures",
+    "No evidence of pulmonary embolism or malignancy",
+    "Airways appear patent and normal"
+  ],
+  "conclusion": "Normal chest CT examination. Consider non-pulmonary causes of dyspnea.",
+  "recommendations": "Cardiology consultation recommended. Consider echocardiogram and stress testing to evaluate cardiac function."
+}

@@ -2,29 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>GEHE MCP UI</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GEHE MCP Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>GEHE MCP Dashboard</h1>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul class="flashes">
-      {% for cat, msg in messages %}
-        <li class="{{ cat }}">{{ msg }}</li>
-      {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-heartbeat"></i>
+          <h1>GEHE MCP Dashboard</h1>
+        </div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">System Online</span>
+        </div>
+      </div>
+    </header>
 
-  <form method="post" enctype="multipart/form-data">
-    <label>Upload DICOM files:</label><br>
-    <input type="file" name="dicoms" multiple accept=".dcm"><br><br>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="messages-container">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-    <label>Upload Text Data (first line = PatientID):</label><br>
-    <input type="file" name="textdata" accept=".txt,.csv,.json"><br><br>
+      <!-- Upload Form -->
+      <div class="upload-section">
+        <div class="section-header">
+          <h2><i class="fas fa-upload"></i> Medical Data Upload</h2>
+          <p>Upload DICOM images and patient data files for AI-powered analysis</p>
+        </div>
 
-    <button type="submit">Process All</button>
-  </form>
+        <form method="post" enctype="multipart/form-data" class="upload-form">
+          <div class="upload-grid">
+            <!-- DICOM Upload -->
+            <div class="upload-card">
+              <div class="card-header">
+                <i class="fas fa-images"></i>
+                <h3>DICOM Images</h3>
+              </div>
+              <div class="card-body">
+                <div class="file-input-wrapper">
+                  <input type="file" name="dicoms" multiple accept=".dcm" id="dicom-files" class="file-input">
+                  <label for="dicom-files" class="file-label">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Choose DICOM files</span>
+                    <small>Select multiple .dcm files</small>
+                  </label>
+                </div>
+                <div class="file-info">
+                  <span class="file-count" id="dicom-count">No files selected</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patient Data Upload -->
+            <div class="upload-card">
+              <div class="card-header">
+                <i class="fas fa-file-medical"></i>
+                <h3>Patient Data</h3>
+              </div>
+              <div class="card-body">
+                <div class="file-input-wrapper">
+                  <input type="file" name="hl7data" multiple accept=".json,.hl7,.txt" id="patient-files" class="file-input">
+                  <label for="patient-files" class="file-label">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Choose data files</span>
+                    <small>JSON, HL7, or TXT files</small>
+                  </label>
+                </div>
+                <div class="file-info">
+                  <span class="file-count" id="patient-count">No files selected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Process Button -->
+          <div class="process-section">
+            <button type="submit" class="process-btn">
+              <i class="fas fa-cogs"></i>
+              <span>Process All Files</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Info Cards -->
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <div class="info-content">
+            <h4>Orthanc DICOM Server</h4>
+            <p>Stores and manages medical images</p>
+            <span class="info-status">Port 8042</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-icon">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="info-content">
+            <h4>HAPI FHIR Server</h4>
+            <p>Manages clinical data resources</p>
+            <span class="info-status">Port 8080</span>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-icon">
+            <i class="fas fa-brain"></i>
+          </div>
+          <div class="info-content">
+            <h4>AI Analysis Engine</h4>
+            <p>Processes matched datasets</p>
+            <span class="info-status">Ready</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // File input handling
+    document.getElementById('dicom-files').addEventListener('change', function(e) {
+      const count = e.target.files.length;
+      const countElement = document.getElementById('dicom-count');
+      countElement.textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
+    });
+
+    document.getElementById('patient-files').addEventListener('change', function(e) {
+      const count = e.target.files.length;
+      const countElement = document.getElementById('patient-count');
+      countElement.textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
+    });
+
+    // Form submission handling
+    document.querySelector('.upload-form').addEventListener('submit', function(e) {
+      const btn = document.querySelector('.process-btn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
+      btn.disabled = true;
+    });
+  </script>
 </body>
 </html>

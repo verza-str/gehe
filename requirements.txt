@@ -3,3 +3,5 @@ Werkzeug           # for secure filenames
 requests
 pydicom
 dicomweb-client
+hl7                # for HL7 message parsing
+numpy              # for DICOM image data

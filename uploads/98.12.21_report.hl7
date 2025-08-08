@@ -1,0 +1,8 @@
+MSH|^~\&|HIS|HOSPITAL|LAB|HOSPITAL|20250808140000||ORU^R01|MSG003|P|2.5
+PID|1||98.12.21^^^MR^MRN||PATIENT^TEST^C||19801201|M|||789 OAK AVE^^BOSTON^MA^02115||617-555-9999
+OBR|1|ORDER003|RESULT003|36643-5^Chest CT^LN|||20250808||||||||||RAD^RADIOLOGY
+OBX|1|TX|18748-4^Diagnostic imaging study^LN||CLINICAL HISTORY: 44-year-old male with shortness of breath and chest tightness.||||||F
+OBX|2|TX|18748-4^Diagnostic imaging study^LN||FINDINGS: Non-contrast CT chest shows clear lung fields with normal cardiac silhouette.||||||F  
+OBX|3|TX|18748-4^Diagnostic imaging study^LN||No evidence of pulmonary embolism, pneumonia, or malignancy. Airways appear patent.||||||F
+OBX|4|TX|18748-4^Diagnostic imaging study^LN||IMPRESSION: Normal chest CT examination. Consider non-pulmonary causes of dyspnea.||||||F
+NTE|1||Recommend cardiology consultation and stress testing if symptoms persist.

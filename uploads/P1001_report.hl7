@@ -1,0 +1,8 @@
+MSH|^~\&|HIS|HOSPITAL|LAB|HOSPITAL|20250808120000||ORU^R01|MSG001|P|2.5
+PID|1||P1001^^^MR^MRN||SMITH^JOHN^A||19900115|M|||123 MAIN ST^^BOSTON^MA^02101||617-555-1234
+OBR|1|ORDER001|RESULT001|36643-5^Chest CT^LN|||20250808||||||||||RAD^RADIOLOGY
+OBX|1|TX|18748-4^Diagnostic imaging study^LN||CLINICAL HISTORY: 34-year-old male with chest pain and dyspnea on exertion.||||||F
+OBX|2|TX|18748-4^Diagnostic imaging study^LN||FINDINGS: High-resolution CT scan of the chest demonstrates normal lung parenchyma bilaterally.||||||F  
+OBX|3|TX|18748-4^Diagnostic imaging study^LN||No evidence of pulmonary embolism, pneumonia, or pleural effusion.||||||F
+OBX|4|TX|18748-4^Diagnostic imaging study^LN||IMPRESSION: Normal chest CT. No acute cardiopulmonary abnormalities.||||||F
+NTE|1||Recommend clinical follow-up if symptoms persist.
