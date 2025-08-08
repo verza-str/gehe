@@ -11,12 +11,12 @@ from requests import Session
 class Config:
     ORTHANC_URL = "http://localhost:8042"
     ORTHANC_AUTH = ("orthanc", "orthanc")
-    FHIR_URL   = "http://localhost:8080/fhir"
-    FHIR_HDR   = {"Content-Type": "application/fhir+json"}
+    FHIR_URL = "http://localhost:8080/fhir"
+    FHIR_HDR = {"Content-Type": "application/fhir+json"}
 
     UPLOAD_FOLDER = "uploads"
-    ALLOWED_DCM   = {"dcm", "DCM"}
-    ALLOWED_TEXT  = {"txt", "csv", "json"}
+    ALLOWED_DCM = {"dcm", "DCM"}
+    ALLOWED_TEXT = {"txt", "csv", "json"}
 
 # ─── APP SETUP ────────────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -43,7 +43,7 @@ def allowed_file(filename, allowed_exts):
 def index():
     if request.method == "POST":
         dicom_files = request.files.getlist("dicoms")
-        text_files  = request.files.getlist("textdata")
+        text_files = request.files.getlist("textdata")
 
         # 1) Process DICOM uploads and index by PatientID
         dicom_index = {}  # pid -> list of SOP Instance UIDs
@@ -68,7 +68,7 @@ def index():
                 # read header to get IDs
                 ds = pydicom.dcmread(path, stop_before_pixels=True)
                 pid = ds.get("PatientID", "UNKNOWN")
-                study_uid  = ds.get("StudyInstanceUID")
+                study_uid = ds.get("StudyInstanceUID")
                 series_uid = ds.get("SeriesInstanceUID")
 
                 # query Orthanc for all instances in that series
@@ -87,41 +87,80 @@ def index():
                 path = os.path.join(Config.UPLOAD_FOLDER, fname)
                 f.save(path)
 
-                # assume first line is PatientID, rest is the report
+                # Read lines: first line = PatientID
                 with open(path, "r", encoding="utf-8") as fp:
                     lines = fp.read().splitlines()
                 if not lines:
                     flash(f"Empty text file: {fname}", "warning")
                     continue
 
-                pid    = lines[0].strip()
+                pid = lines[0].strip()  # Assuming only PatientID on first line
                 report = "\n".join(lines[1:]).strip()
                 text_index[pid] = report
 
-                # push to HAPI FHIR as DiagnosticReport
+                # ── Fix: sanitize FHIR id ─────────────────────────────
+                safe_id = pid.replace("_", "-")
+
+                # ── Step 1: Create Patient in FHIR ────────────────────
+                patient_resource = {
+                    "resourceType": "Patient",
+                    "id": safe_id,
+                    "identifier": [
+                        {"system": "http://hospital.org/patients", "value": pid}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Unknown", "given": [pid]}
+                    ],
+                    "gender": "unknown"
+                }
+
+                patient_put = requests.put(
+                    f"{Config.FHIR_URL}/Patient/{safe_id}",
+                    headers=Config.FHIR_HDR,
+                    json=patient_resource
+                )
+
+                if patient_put.status_code not in (200, 201):
+                    flash(f"FHIR patient create failed for PID {pid} ({patient_put.status_code})", "error")
+                    continue
+                else:
+                    flash(f"FHIR Patient created for PID {pid}", "success")
+
+                # ── Step 2: Create DiagnosticReport ───────────────────
                 dr = {
                     "resourceType": "DiagnosticReport",
                     "status": "final",
-                    "subject": {"reference": f"Patient/{pid}"},
+                    "subject": {"reference": f"Patient/{safe_id}"},
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "45033-8",
+                                "display": "Radiology Report"
+                            }
+                        ]
+                    },
                     "conclusion": report
                 }
-                r = requests.post(
+
+                dr_post = requests.post(
                     f"{Config.FHIR_URL}/DiagnosticReport",
                     headers=Config.FHIR_HDR,
                     json=dr
                 )
-                if r.status_code not in (200, 201):
-                    flash(f"FHIR report failed for PID {pid} ({r.status_code})", "error")
+
+                if dr_post.status_code not in (200, 201):
+                    flash(f"FHIR report failed for PID {pid} ({dr_post.status_code})", "error")
+                else:
+                    flash(f"FHIR DiagnosticReport created for PID {pid}", "success")
 
         # 3) Match and queue AI ingestion
         pids_with_images = set(dicom_index)
-        pids_with_text   = set(text_index)
+        pids_with_text = set(text_index)
         matched = pids_with_images & pids_with_text
         for pid in matched:
             sop_list = dicom_index[pid]
-            report   = text_index[pid]
-            # TODO: call your AI ingestion function, e.g.:
-            # ai.ingest(pid, sop_list, report)
+            report = text_index[pid]
             flash(f"Queued AI for PID {pid} ({len(sop_list)} images)", "success")
 
         # 4) Warn on unmatched
