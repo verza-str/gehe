@@ -1,0 +1,11 @@
+100-HM10400
+PatientBirthDate: 1997-10-28
+PatientSex: M
+StudyDate: 19971028
+AccessionNumber: 2819497684894126
+ReferringPhysicianName: Dr. John Smith
+StudyInstanceUID: 1.3.6.1.4.1.14519.5.2.1.6834.5010.119076582718824960697635220329
+StudyID: P100-01
+
+This is a sample report for the patient.
+The analysis of the lung scan shows signs of pneumonia.

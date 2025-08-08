@@ -1,5 +1,4 @@
 Flask
-Werkzeug           # for secure filenames
 requests
 pydicom
 dicomweb-client

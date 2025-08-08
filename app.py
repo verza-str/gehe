@@ -11,11 +11,11 @@ from requests import Session
 class Config:
     ORTHANC_URL = "http://localhost:8042"
     ORTHANC_AUTH = ("orthanc", "orthanc")
-    FHIR_URL   = "http://localhost:8080/fhir"
-    FHIR_HDR   = {"Content-Type": "application/fhir+json"}
+    FHIR_URL = "http://localhost:8080/fhir"
+    FHIR_HDR = {"Content-Type": "application/fhir+json"}
 
     UPLOAD_FOLDER = "uploads"
-    ALLOWED_DCM   = {"dcm", "DCM"}
+    ALLOWED_DCM = {"dcm", "DCM"}
     ALLOWED_PATIENT_DATA = {"json", "hl7", "txt"}
 
 # ─── APP SETUP ────────────────────────────────────────────────────────────────
@@ -112,13 +112,6 @@ def parse_json_patient_data(file_path):
             return patient_id, report_text
         
         # Handle custom patient data format
-        # Expected JSON format:
-        # {
-        #   "patientId": "P1001",
-        #   "clinicalText": "Patient diagnosis and findings...",
-        #   "reports": ["Finding 1", "Finding 2"]  // optional
-        # }
-        
         patient_id = data.get("patientId") or data.get("PatientID") or data.get("patient_id") or data.get("id")
         
         # Get clinical text from various possible fields
@@ -181,7 +174,7 @@ def parse_patient_data_file(file_path):
 def index():
     if request.method == "POST":
         dicom_files = request.files.getlist("dicoms")
-        hl7_files   = request.files.getlist("hl7data")
+        hl7_files = request.files.getlist("hl7data")
 
         # 1) Process DICOM uploads and index by PatientID
         dicom_index = {}  # pid -> list of SOP Instance UIDs
@@ -212,7 +205,7 @@ def index():
                 try:
                     ds = pydicom.dcmread(path, stop_before_pixels=True)
                     pid = ds.get("PatientID", None)
-                    study_uid  = ds.get("StudyInstanceUID", None)
+                    study_uid = ds.get("StudyInstanceUID", None)
                     series_uid = ds.get("SeriesInstanceUID", None)
                     sop_uid = ds.get("SOPInstanceUID", None)
                     
@@ -251,7 +244,38 @@ def index():
                 patient_data_index[pid] = report
                 flash(f"Successfully processed patient data: {fname} (Patient: {pid})", "success")
 
-                # push to HAPI FHIR as DiagnosticReport
+                # ── Fix: sanitize FHIR id ─────────────────────────────
+                safe_id = pid.replace(".", "-").replace("_", "-")
+
+                # ── Step 1: Create Patient in FHIR ────────────────────
+                patient_resource = {
+                    "resourceType": "Patient",
+                    "id": safe_id,
+                    "identifier": [
+                        {"system": "http://hospital.org/patients", "value": pid}
+                    ],
+                    "name": [
+                        {"use": "official", "family": "Unknown", "given": [pid]}
+                    ],
+                    "gender": "unknown"
+                }
+
+                try:
+                    patient_put = requests.put(
+                        f"{Config.FHIR_URL}/Patient/{safe_id}",
+                        headers=Config.FHIR_HDR,
+                        json=patient_resource,
+                        timeout=30
+                    )
+
+                    if patient_put.status_code not in (200, 201):
+                        flash(f"FHIR patient create failed for PID {pid} ({patient_put.status_code})", "error")
+                    else:
+                        flash(f"FHIR Patient created for PID {pid}", "success")
+                except requests.exceptions.RequestException as e:
+                    flash(f"Network error creating FHIR patient for PID {pid}: {str(e)}", "error")
+
+                # ── Step 2: Create DiagnosticReport ───────────────────
                 dr = {
                     "resourceType": "DiagnosticReport",
                     "status": "final",
@@ -269,10 +293,11 @@ def index():
                             "display": "Laboratory report"
                         }]
                     },
-                    "subject": {"reference": f"Patient/{pid}"},
+                    "subject": {"reference": f"Patient/{safe_id}"},
                     "effectiveDateTime": "2025-08-07",
                     "conclusion": report
                 }
+                
                 try:
                     r = requests.post(
                         f"{Config.FHIR_URL}/DiagnosticReport",
@@ -281,7 +306,9 @@ def index():
                         timeout=30
                     )
                     if r.status_code not in (200, 201):
-                        flash(f"FHIR HL7 report failed for PID {pid} ({r.status_code}): {r.text[:100]}", "error")
+                        flash(f"FHIR report failed for PID {pid} ({r.status_code}): {r.text[:100]}", "error")
+                    else:
+                        flash(f"FHIR DiagnosticReport created for PID {pid}", "success")
                 except requests.exceptions.RequestException as e:
                     flash(f"Network error uploading FHIR report for PID {pid}: {str(e)}", "error")
 
@@ -291,7 +318,7 @@ def index():
         matched = pids_with_images & pids_with_patient_data
         for pid in matched:
             sop_list = dicom_index[pid]
-            report   = patient_data_index[pid]
+            report = patient_data_index[pid]
             # TODO: call your AI ingestion function, e.g.:
             # ai.ingest(pid, sop_list, report)
             flash(f"Queued AI for PID {pid} ({len(sop_list)} images)", "success")
