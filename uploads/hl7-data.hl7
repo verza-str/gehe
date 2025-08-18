@@ -1,0 +1,5 @@
+MSH|^~\&|HIS|RIH|EKG|EKG|202508141200||ADT^A01|MSG00001|P|2.5
+PID|1|98.12.21||Doe^John^A||19700101|M|||123 Main Street^^Springfield^IL^62701^USA||+1-555-234-5678|||S||123456789
+OBX|1|TX|PATIENT_DESC^Patient Description||Patient with a history of chronic obstructive pulmonary disease (COPD), presenting for evaluation of lung function. Recently experienced shortness of breath and was referred for a CT chest scan to assess possible pulmonary nodules and airway inflammation.||||||F
+OBX|2|TX|ALLERGIES^Known Allergies||Penicillin - Causes skin rash.||||||F
+OBX|3|TX|MED_HISTORY^Medical History||History of COPD, mild hypertension, and seasonal allergies. Non-smoker for the past 5 years.||||||F

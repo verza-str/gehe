@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FHIR Resources - MedData Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-fire"></i>
+                    <h1>FHIR Resources</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="{{ url_for('index') }}" class="nav-link">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="{{ url_for('conversion_history') }}" class="nav-link">
+                        <i class="fas fa-history"></i> History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'exclamation-triangle' if category == 'warning' else 'info-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% if resources %}
+        <div class="main-content">
+            <!-- Patients Section -->
+            <div class="resource-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user"></i> Patients ({{ resources.patients|length }})</h2>
+                </div>
+                <div class="resource-grid">
+                    {% for patient in resources.patients %}
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <i class="fas fa-user"></i>
+                            <h3>{{ patient.id }}</h3>
+                        </div>
+                        <div class="resource-content">
+                            <p><strong>Name:</strong> 
+                                {% if patient.name and patient.name|length > 0 %}
+                                    {{ patient.name[0].given|join(' ') if patient.name[0].given else '' }} {{ patient.name[0].family if patient.name[0].family else '' }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </p>
+                            <p><strong>Gender:</strong> {{ patient.gender|default('Unknown') }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="status-badge {{ 'active' if patient.active else 'inactive' }}">
+                                    {{ 'Active' if patient.active else 'Inactive' }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="{{ url_for('view_single_fhir_resource', resource_type='Patient', resource_id=patient.id) }}" class="btn-view">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Observations Section -->
+            <div class="resource-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Observations ({{ resources.observations|length }})</h2>
+                </div>
+                <div class="resource-grid">
+                    {% for observation in resources.observations %}
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>{{ observation.id }}</h3>
+                        </div>
+                        <div class="resource-content">
+                            <p><strong>Status:</strong> {{ observation.status }}</p>
+                            <p><strong>Code:</strong> {{ observation.code.text if observation.code.text else observation.code.coding[0].display if observation.code.coding else 'Unknown' }}</p>
+                            <p><strong>Patient:</strong> {{ observation.subject.reference if observation.subject else 'Unknown' }}</p>
+                            <p><strong>Value:</strong> {{ observation.valueString[:100] if observation.valueString else 'No value' }}{{ '...' if observation.valueString and observation.valueString|length > 100 else '' }}</p>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="{{ url_for('view_single_fhir_resource', resource_type='Observation', resource_id=observation.id) }}" class="btn-view">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Diagnostic Reports Section -->
+            <div class="resource-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-medical"></i> Diagnostic Reports ({{ resources.diagnostic_reports|length }})</h2>
+                </div>
+                <div class="resource-grid">
+                    {% for report in resources.diagnostic_reports %}
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <i class="fas fa-file-medical"></i>
+                            <h3>{{ report.id }}</h3>
+                        </div>
+                        <div class="resource-content">
+                            <p><strong>Status:</strong> {{ report.status }}</p>
+                            <p><strong>Code:</strong> {{ report.code.text if report.code.text else report.code.coding[0].display if report.code.coding else 'Unknown' }}</p>
+                            <p><strong>Patient:</strong> {{ report.subject.reference if report.subject else 'Unknown' }}</p>
+                            <p><strong>Conclusion:</strong> {{ report.conclusion[:100] if report.conclusion else 'No conclusion' }}{{ '...' if report.conclusion and report.conclusion|length > 100 else '' }}</p>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="{{ url_for('view_single_fhir_resource', resource_type='DiagnosticReport', resource_id=report.id) }}" class="btn-view">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-database"></i>
+            <h2>No FHIR Resources Found</h2>
+            <p>No converted FHIR resources are available. Upload and convert some HL7 files first.</p>
+            <a href="{{ url_for('index') }}" class="btn-primary">
+                <i class="fas fa-upload"></i> Upload Files
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

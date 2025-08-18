@@ -17,6 +17,14 @@
           <i class="fas fa-heartbeat"></i>
           <h1>GEHE MCP Dashboard</h1>
         </div>
+        <div class="nav-links">
+          <a href="{{ url_for('view_fhir_resources') }}" class="nav-link">
+            <i class="fas fa-fire"></i> View FHIR Resources
+          </a>
+          <a href="{{ url_for('conversion_history') }}" class="nav-link">
+            <i class="fas fa-history"></i> Conversion History
+          </a>
+        </div>
         <div class="status-indicator">
           <span class="status-dot"></span>
           <span class="status-text">System Online</span>
@@ -24,82 +32,116 @@
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Flash Messages -->
+    <!-- Messages -->
+    <div class="messages-container">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <div class="messages-container">
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">
-                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
-                <span>{{ message }}</span>
-              </div>
-            {% endfor %}
-          </div>
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'exclamation-triangle' if category == 'warning' else 'info-circle' }}"></i>
+              {{ message }}
+            </div>
+          {% endfor %}
         {% endif %}
       {% endwith %}
+    </div>
 
-      <!-- Upload Form -->
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Upload Section -->
       <div class="upload-section">
         <div class="section-header">
-          <h2><i class="fas fa-upload"></i> Medical Data Upload</h2>
-          <p>Upload DICOM images and patient data files for AI-powered analysis</p>
+          <h2><i class="fas fa-cloud-upload-alt"></i> Medical Data Upload</h2>
+          <p>Upload DICOM images and patient data files for processing</p>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="upload-form">
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
           <div class="upload-grid">
             <!-- DICOM Upload -->
             <div class="upload-card">
               <div class="card-header">
-                <i class="fas fa-images"></i>
+                <i class="fas fa-x-ray"></i>
                 <h3>DICOM Images</h3>
               </div>
-              <div class="card-body">
-                <div class="file-input-wrapper">
-                  <input type="file" name="dicoms" multiple accept=".dcm" id="dicom-files" class="file-input">
-                  <label for="dicom-files" class="file-label">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Choose DICOM files</span>
-                    <small>Select multiple .dcm files</small>
-                  </label>
-                </div>
-                <div class="file-info">
-                  <span class="file-count" id="dicom-count">No files selected</span>
-                </div>
+              <div class="file-input-wrapper">
+                <input type="file" name="dicoms" id="dicoms" class="file-input" multiple accept=".dcm,.DCM">
+                <label for="dicoms" class="file-label">
+                  <i class="fas fa-upload"></i>
+                  <span>Choose DICOM files</span>
+                  <small>Select .dcm files</small>
+                </label>
+              </div>
+              <div class="file-info">
+                <span class="file-count" id="dicom-count">No files selected</span>
               </div>
             </div>
 
             <!-- Patient Data Upload -->
             <div class="upload-card">
               <div class="card-header">
-                <i class="fas fa-file-medical"></i>
+                <i class="fas fa-file-medical-alt"></i>
                 <h3>Patient Data</h3>
               </div>
-              <div class="card-body">
-                <div class="file-input-wrapper">
-                  <input type="file" name="hl7data" multiple accept=".json,.hl7,.txt" id="patient-files" class="file-input">
-                  <label for="patient-files" class="file-label">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Choose data files</span>
-                    <small>JSON, HL7, or TXT files</small>
-                  </label>
-                </div>
-                <div class="file-info">
-                  <span class="file-count" id="patient-count">No files selected</span>
-                </div>
+              <div class="file-input-wrapper">
+                <input type="file" name="hl7data" id="hl7data" class="file-input" multiple accept=".json,.hl7,.txt">
+                <label for="hl7data" class="file-label">
+                  <i class="fas fa-upload"></i>
+                  <span>Choose patient data files</span>
+                  <small>Select .json, .hl7, or .txt files</small>
+                </label>
+              </div>
+              <div class="file-info">
+                <span class="file-count" id="hl7-count">No files selected</span>
               </div>
             </div>
           </div>
 
-          <!-- Process Button -->
           <div class="process-section">
-            <button type="submit" class="process-btn">
+            <button type="submit" class="process-btn" id="processBtn">
               <i class="fas fa-cogs"></i>
-              <span>Process All Files</span>
+              Process Files
             </button>
           </div>
         </form>
+      </div>
+
+      <!-- Conversion Status Box -->
+      <div id="conversionBox" class="conversion-box" style="display: none;">
+        <div class="conversion-header">
+          <i class="fas fa-exchange-alt"></i>
+          <h3>HL7 to FHIR Conversion</h3>
+        </div>
+        <div class="conversion-content">
+          <div class="conversion-spinner">
+            <div class="spinner"></div>
+          </div>
+          <div class="conversion-status">
+            <p id="conversionMessage">Converting HL7 data to FHIR format...</p>
+            <div class="conversion-progress">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Popup -->
+      <div id="successPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content success-popup">
+          <div class="popup-header">
+            <i class="fas fa-check-circle"></i>
+            <h3>Conversion Successful!</h3>
+          </div>
+          <div class="popup-body">
+            <p id="successMessage">HL7 data has been successfully converted to FHIR format and uploaded to the server.</p>
+            <div class="conversion-results" id="conversionResults"></div>
+          </div>
+          <div class="popup-footer">
+            <button class="popup-btn" onclick="closeSuccessPopup()">
+              <i class="fas fa-check"></i>
+              Continue
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Info Cards -->
@@ -109,9 +151,9 @@
             <i class="fas fa-database"></i>
           </div>
           <div class="info-content">
-            <h4>Orthanc DICOM Server</h4>
-            <p>Stores and manages medical images</p>
-            <span class="info-status">Port 8042</span>
+            <h4>Orthanc PACS</h4>
+            <p>DICOM image storage and retrieval</p>
+            <span class="info-status">Connected</span>
           </div>
         </div>
 
@@ -120,19 +162,19 @@
             <i class="fas fa-fire"></i>
           </div>
           <div class="info-content">
-            <h4>HAPI FHIR Server</h4>
-            <p>Manages clinical data resources</p>
-            <span class="info-status">Port 8080</span>
+            <h4>FHIR Server</h4>
+            <p>Healthcare data interoperability</p>
+            <span class="info-status">Online</span>
           </div>
         </div>
 
         <div class="info-card">
           <div class="info-icon">
-            <i class="fas fa-brain"></i>
+            <i class="fas fa-robot"></i>
           </div>
           <div class="info-content">
-            <h4>AI Analysis Engine</h4>
-            <p>Processes matched datasets</p>
+            <h4>AI Processing</h4>
+            <p>Automated medical analysis</p>
             <span class="info-status">Ready</span>
           </div>
         </div>
@@ -141,25 +183,98 @@
   </div>
 
   <script>
-    // File input handling
-    document.getElementById('dicom-files').addEventListener('change', function(e) {
+    // File count updates
+    document.getElementById('dicoms').addEventListener('change', function(e) {
       const count = e.target.files.length;
-      const countElement = document.getElementById('dicom-count');
-      countElement.textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
+      document.getElementById('dicom-count').textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
     });
 
-    document.getElementById('patient-files').addEventListener('change', function(e) {
+    document.getElementById('hl7data').addEventListener('change', function(e) {
       const count = e.target.files.length;
-      const countElement = document.getElementById('patient-count');
-      countElement.textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
+      document.getElementById('hl7-count').textContent = count > 0 ? `${count} file(s) selected` : 'No files selected';
     });
 
-    // Form submission handling
-    document.querySelector('.upload-form').addEventListener('submit', function(e) {
-      const btn = document.querySelector('.process-btn');
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Processing...</span>';
-      btn.disabled = true;
-    });
+    // Conversion tracking
+    let conversionResults = {{ conversion_results | default('[]') | safe }};
+    
+    if (conversionResults && conversionResults.length > 0) {
+      showConversionBox();
+      trackConversions(conversionResults);
+    }
+
+    function showConversionBox() {
+      document.getElementById('conversionBox').style.display = 'block';
+      document.getElementById('conversionBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideConversionBox() {
+      document.getElementById('conversionBox').style.display = 'none';
+    }
+
+    function trackConversions(conversions) {
+      let completedCount = 0;
+      const totalCount = conversions.length;
+      
+      conversions.forEach((conversion, index) => {
+        setTimeout(() => {
+          checkConversionStatus(conversion.conversion_id, conversion.patient_id, conversion.filename, () => {
+            completedCount++;
+            updateProgress(completedCount, totalCount);
+            
+            if (completedCount === totalCount) {
+              setTimeout(() => {
+                hideConversionBox();
+                showSuccessPopup(conversions);
+              }, 1000);
+            }
+          });
+        }, index * 500); // Stagger the status checks
+      });
+    }
+
+    function checkConversionStatus(conversionId, patientId, filename, onComplete) {
+      const checkStatus = () => {
+        fetch(`/conversion-status/${conversionId}`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('conversionMessage').textContent = 
+              data.message || `Processing ${filename} for Patient ${patientId}...`;
+            
+            if (data.status === 'success' || data.status === 'error' || data.status === 'partial') {
+              onComplete();
+            } else {
+              setTimeout(checkStatus, 1000); // Check again in 1 second
+            }
+          })
+          .catch(error => {
+            console.error('Error checking conversion status:', error);
+            onComplete();
+          });
+      };
+      
+      checkStatus();
+    }
+
+    function updateProgress(completed, total) {
+      const percentage = (completed / total) * 100;
+      document.getElementById('progressBar').style.width = percentage + '%';
+    }
+
+    function showSuccessPopup(conversions) {
+      const resultsContainer = document.getElementById('conversionResults');
+      resultsContainer.innerHTML = conversions.map(c => 
+        `<div class="result-item">
+            <i class="fas fa-check"></i>
+            <span>Patient ${c.patient_id} - ${c.filename}</span>
+          </div>`
+      ).join('');
+      
+      document.getElementById('successPopup').style.display = 'flex';
+    }
+
+    function closeSuccessPopup() {
+      document.getElementById('successPopup').style.display = 'none';
+    }
   </script>
 </body>
 </html>
